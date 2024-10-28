@@ -1,0 +1,9 @@
+Changelog for smsValidate.
+
+1.0.2-beta
+==============
+- Added docs files on core directory
+
+1.0.1-beta
+==============
+- Initial release.
