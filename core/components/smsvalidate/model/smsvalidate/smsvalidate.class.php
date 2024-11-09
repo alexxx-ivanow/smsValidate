@@ -1,6 +1,4 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 
 class SmsValidate
 {
@@ -18,6 +16,9 @@ class SmsValidate
 
     /** @var int $timeLimit */
     public $timeLimit;
+    
+    /** @var int $codeLength */
+    public $codeLength;
 
     /** @var string $buttonClass */
     public $buttonClass;
@@ -40,11 +41,17 @@ class SmsValidate
         $assetsUrl = $this->modx->getOption('smsvalidate_assets_path', $config,
             MODX_ASSETS_URL . 'components/smsvalidate/');
 
-        if($this->modx->getOption('smsTest', null, false, true)) {
+        if($this->modx->getOption('smsvalidate.sms_test', null, false, true)) {
         	$this->isTest = true;
         }
-        $this->timeLimit = $this->modx->getOption('smsTimeLimit', null, 30, true);
-        $this->buttonClass = $this->modx->getOption('smsButtonRepeatClass', null, '', true);
+        $this->timeLimit = $this->modx->getOption('smsvalidate.sms_time_limit', null, 30, true);
+        $this->buttonClass = $this->modx->getOption('smsvalidate.sms_button_repeat_class', null, '', true);
+        $this->codeLength = $this->modx->getOption('smsvalidate.sms_code_length', null, 6, true);
+        
+        if($this->codeLength > 10) {
+            $this->codeLength = 10;
+            $this->modx->log(modX::LOG_LEVEL_ERROR, '[sms_validate] в настройках выбрана длина кода, превышающую допустимый лимит');
+        }
 
         $this->requiredFields = $this->getRequiredFields($config['validate']);
         $this->phoneField = $config['phoneField'] ?: 'phone';        
@@ -74,7 +81,8 @@ class SmsValidate
      * Вычисляем обязательные поля формы
      * @param string $string
      */
-    public function getRequiredFields($string) {
+    public function getRequiredFields($string)
+    {
     	$output = [];
     	$string_arr = explode(',', $string);
     	foreach ($string_arr as $key => $value) {
@@ -92,7 +100,7 @@ class SmsValidate
      * Генерация уникального кода для СМС
      * @param integer $length
      */
-    public function generateCode($length = 6)
+    public function generateCode($length)
     {
         $max = '';
         for($i = 0; $i < $length; $i++){
@@ -121,20 +129,20 @@ class SmsValidate
     {
         require_once dirname(__FILE__) . '/handlers/smsru.class.php';
         
-        $class = $this->modx->getOption('smsHandlerClass', null, 'smsRu', true);
+        $class = $this->modx->getOption('smsvalidate.sms_handler_class', null, 'smsRu', true);
 
         if ($class != 'smsRu') {
             $this->loadCustomClasses();
         }
 
         if (!class_exists($class)) {
-            $this->modx->log(modX::LOG_LEVEL_ERROR, 'SMS handler class "' . $class . '" not found.');
+            $this->modx->log(modX::LOG_LEVEL_ERROR, '[sms_validate] класс СМС-провайдера "' . $class . '" не найден');
             $class = 'smsRu';
         }
 
         $this->handler = new $class($this->modx, []);
         if (!($this->handler instanceof sendSmsInterface)) {
-            $this->modx->log(modX::LOG_LEVEL_ERROR, 'Could not initialize SMS handler class: "' . $class . '"');
+            $this->modx->log(modX::LOG_LEVEL_ERROR, '[sms_validate] не получается инициализировать класс СМС-провайдера: "' . $class . '"');
 
             return false;
         }
@@ -142,7 +150,11 @@ class SmsValidate
         return true;
     }
 
-    // отправка СМС
+    /**
+     * отправка СМС через класс провайдера
+     * @param string $phone
+     * @param string $code
+     */
     public function send($phone, $code)
     {   
         if (!is_object($this->handler) || !($this->handler instanceof sendSmsInterface)) {
@@ -154,7 +166,10 @@ class SmsValidate
         return $this->handler->send($phone, $code);
     }
     
-    // экранирование входящего массива
+    /**
+     * экранирование входящего массива
+     * @param array $array
+     */
     public function arraySanitise($array) 
     {
         $output = [];
@@ -164,7 +179,11 @@ class SmsValidate
         return $output;
     }
 
-    // менеджер валидации телефона по СМС
+    /**
+     * менеджер валидации телефона по СМС
+     * @param array $request
+     * @param string $value
+     */
     public function run($request, $value)
     {
     	
@@ -173,7 +192,7 @@ class SmsValidate
 
         $request = $this->arraySanitise($request);
 
-        // если не заполнены обязательные поля - выходим
+        // если не заполнены обязательные поля - выходим, нет смысла отправлять СМС
         foreach($request as $key => $req) {
         	if($req === '' && in_array($key, $this->requiredFields)) {
         		return [
@@ -183,8 +202,9 @@ class SmsValidate
         	}
         }
 
-        // проверка заполненного поля телефона
+        // проверка заполненного поля телефона: если нет поля или оно не обязательное - отправляем форму без СМС
         if(!$this->phoneField || !isset($request[$this->phoneField])) {
+            $this->modx->log(modX::LOG_LEVEL_ERROR, $this->modx->lexicon('sms_validate_empty_phone_field'));
         	return [
                 'success' => true,
                 'message' => '',
@@ -192,23 +212,23 @@ class SmsValidate
         }
 
         // логика проверки СМС
-        if(!isset($_SESSION['sms_code']) 
-          || (isset($request['repeat_sms']) && $request['repeat_sms'] == 1 && time() - $_SESSION['exec_time'] >= $this->timeLimit)) {
+        if(!isset($_SESSION['sms_validate_sms_code']) 
+          || (isset($request['repeat_sms']) && $request['repeat_sms'] == 1 && time() - $_SESSION['sms_validate_exec_time'] >= $this->timeLimit)) {
 
-            $_SESSION['sms_code'] = $this->generateCode();
-            $_SESSION['exec_time'] = time();
+            $_SESSION['sms_validate_sms_code'] = $this->generateCode($this->codeLength);
+            $_SESSION['sms_validate_exec_time'] = time();
 
             // отправка СМС на сервис
             if($this->isTest) { // тестовый режим
-            	$message = $this->modx->lexicon('sms_validate_test_mode', ['code' => $_SESSION['sms_code']]);
-            	$this->modx->log(1, $_SESSION['sms_code']);
+            	$message = $this->modx->lexicon('sms_validate_test_mode', ['code' => $_SESSION['sms_validate_sms_code']]);
+            	$this->modx->log(modX::LOG_LEVEL_ERROR, $_SESSION['sms_validate_sms_code']);
             } else {
 
-            	if(!$this->send($request[$this->phoneField], $_SESSION['sms_code'])) {                	
-                    $message = $this->modx->lexicon('sms_validate_service_error_l');
+            	if(!$this->send($request[$this->phoneField], $_SESSION['sms_validate_sms_code'])) {                	
+                    $message = $this->modx->lexicon('sms_validate_service_error');
                 } else {
-                    if((time() - $_SESSION['exec_time']) < $this->timeLimit) {
-                        $message = $this->modx->lexicon('sms_validate_send_limit_seconds', ['limit' => $this->timeLimit - (time() - $_SESSION['exec_time'])]);
+                    if((time() - $_SESSION['sms_validate_exec_time']) < $this->timeLimit) {
+                        $message = $this->modx->lexicon('sms_validate_send_limit_seconds', ['limit' => $this->timeLimit - (time() - $_SESSION['sms_validate_exec_time'])]);
                     } else {
                         $message = $this->modx->lexicon('sms_validate_send_with_repeat') . '<button class="' . $this->buttonClass . ' jsSmsRepeat">' . $this->modx->lexicon('sms_validate_button_repeat_title') . '</button>';
                     }
@@ -216,27 +236,27 @@ class SmsValidate
             }            
 
         }
-        elseif ($value == '' && $_SESSION['sms_code']) {
+        elseif ($value == '' && $_SESSION['sms_validate_sms_code']) {
 
-            if((time() - $_SESSION['exec_time']) < $this->timeLimit) {
-                $message = $this->modx->lexicon('sms_validate_send_limit_seconds', ['limit' => $this->timeLimit - (time() - $_SESSION['exec_time'])]);
+            if((time() - $_SESSION['sms_validate_exec_time']) < $this->timeLimit) {
+                $message = $this->modx->lexicon('sms_validate_send_limit_seconds', ['limit' => $this->timeLimit - (time() - $_SESSION['sms_validate_exec_time'])]);
             } else {
                 $message = $this->modx->lexicon('sms_validate_send_with_repeat') . '<button class="' . $this->buttonClass . ' jsSmsRepeat">' . $this->modx->lexicon('sms_validate_button_repeat_title') . '</button>';
             }
 
         }
-        elseif ($_SESSION['sms_code'] && $value != $_SESSION['sms_code']) {  
+        elseif ($_SESSION['sms_validate_sms_code'] && $value != $_SESSION['sms_validate_sms_code']) {  
 
-            if(time() - $_SESSION['exec_time'] < $this->timeLimit) {
-                $message = $this->modx->lexicon('sms_validate_send_incorrect_limit_seconds', ['limit' => $this->timeLimit - (time() - $_SESSION['exec_time'])]);
+            if(time() - $_SESSION['sms_validate_exec_time'] < $this->timeLimit) {
+                $message = $this->modx->lexicon('sms_validate_send_incorrect_limit_seconds', ['limit' => $this->timeLimit - (time() - $_SESSION['sms_validate_exec_time'])]);
             } else {
                 $message = $this->modx->lexicon('sms_validate_send_incorrect_with_repeat') . '<button class="' . $this->buttonClass . ' jsSmsRepeat">' . $this->modx->lexicon('sms_validate_button_repeat_title') . '</button>';
             }
 
         } else {
 
-            unset($_SESSION['sms_code']);
-            unset($_SESSION['exec_time']);
+            unset($_SESSION['sms_validate_sms_code']);
+            unset($_SESSION['sms_validate_exec_time']);
             $success = true;
 
         }

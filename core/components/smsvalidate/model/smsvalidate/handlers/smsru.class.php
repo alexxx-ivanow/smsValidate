@@ -1,6 +1,4 @@
 <?
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 require_once dirname(__FILE__) . '/interfaces/sendSmsInterface.php';
 
 class smsRu implements sendSmsInterface {
@@ -58,11 +56,10 @@ class smsRu implements sendSmsInterface {
 
         $json = json_decode($body);
         if ($json) { 
-            $this->modx->log(1, print_r($json, 1));
             if ($json->status == "OK") {
                 return true;
             } else {
-                $this->modx->log(1, 'Запрос не выполнился. Код ошибки: ' . $json->status_code . ' Текст ошибки: ' . $json->status_text);
+                $this->modx->log(modX::LOG_LEVEL_ERROR, 'Запрос не выполнился. Код ошибки: ' . $json->status_code . ' Текст ошибки: ' . $json->status_text);
             }
         }        
         return false;

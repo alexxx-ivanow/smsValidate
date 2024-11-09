@@ -1,5 +1,4 @@
 <?
-
 require_once dirname(__FILE__) . '/interfaces/sendSmsInterface.php';
 
 class intisteleSms implements sendSmsInterface {

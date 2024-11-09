@@ -1,12 +1,12 @@
 <?php
 
 return [
-    'modal_form_discount' => [
-        'file' => 'modal_form_discount',
+    'smsvalidate_form' => [
+        'file' => 'smsvalidate_form',
         'description' => '',
     ],
-    'modal_report_discount_tpl' => [
-        'file' => 'modal_report_discount_tpl',
+    'smsvalidate_email_tpl' => [
+        'file' => 'smsvalidate_email_tpl',
         'description' => '',
     ],
 ];

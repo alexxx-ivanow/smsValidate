@@ -12,5 +12,5 @@ interface sendSmsInterface
      *
      * @return bool
      */
-	public function send($phone, $code);
+	public function send(string $phone, int $code);
 }

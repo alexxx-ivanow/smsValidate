@@ -1,5 +1,9 @@
 Changelog for smsValidate.
 
+1.0.4-beta
+==============
+- Added new setting smsvalidate.sms_code_length, refactoring settings names
+
 1.0.2-beta
 ==============
 - Added docs files on core directory

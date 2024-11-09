@@ -1,24 +1,29 @@
 <?php
 
 return [
-    'smsTest' => [
+    'smsvalidate.sms_test' => [
         'xtype' => 'combo-boolean',
         'value' => true,
         'area' => 'smsvalidate',
     ],
-    'smsHandlerClass' => [
+    'smsvalidate.sms_handler_class' => [
         'xtype' => 'textfield',
         'value' => 'smsRu',
         'area' => 'smsvalidate',
     ],
-    'smsTimeLimit' => [
+    'smsvalidate.sms_time_limit' => [
         'xtype' => 'textfield',
         'value' => '30',
         'area' => 'smsvalidate',
     ],
-    'smsButtonRepeatClass' => [
+    'smsvalidate.sms_button_repeat_class' => [
         'xtype' => 'textfield',
         'value' => 'btn',
+        'area' => 'smsvalidate',
+    ],
+    'smsvalidate.sms_code_length' => [
+        'xtype' => 'textfield',
+        'value' => '6',
         'area' => 'smsvalidate',
     ],
 ];
