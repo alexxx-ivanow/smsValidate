@@ -1,5 +1,9 @@
 Changelog for smsValidate.
 
+1.0.5-beta
+==============
+- Added different sessions for different forms
+
 1.0.4-beta
 ==============
 - Added new setting smsvalidate.sms_code_length, refactoring settings names
