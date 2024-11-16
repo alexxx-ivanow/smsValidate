@@ -1,7 +1,7 @@
 <?
 require_once dirname(__FILE__) . '/interfaces/sendSmsInterface.php';
 
-class smsRu implements sendSmsInterface {
+class smscRu implements sendSmsInterface {
 
 	/** @var modX $modx */
     public $modx;
@@ -19,7 +19,8 @@ class smsRu implements sendSmsInterface {
     	$this->modx = $modx;
 
     	$this->config = array_merge([            
-            'api_key' => '', // вводим токен
+            'login' => '', // вводим логин
+            'psw' => '', // вводим пароль
             'method' => 'send',
         ], $config);
     }
@@ -42,24 +43,25 @@ class smsRu implements sendSmsInterface {
         $phone = str_replace(['+', '(', ')', '-', ' '], '', $phone);            
         
         // запрос в сервис
-        $ch = curl_init('https://sms.ru/sms/' . $this->config['method']);
+        $ch = curl_init('https://smsc.ru/rest/' .$this->config['method'] . '/');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
-            'api_id' => $this->config['api_key'],
-            'to' => $phone,
-            'msg' => $code,            
-            'json' => 1 // Для получения более развернутого ответа от сервера
+        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+            'login' => $this->config['login'],
+            'psw' => $this->config['psw'],
+            'phones' => $phone,
+            'mes' => $code
         ]));
         $body = curl_exec($ch);
         curl_close($ch);
 
         $json = json_decode($body, true);
+        
         if ($json) { 
-            if ($json['status'] == "OK" && $json['sms'][$phone]['status'] === 'OK') {
+            if (!isset($json['error'])) {
                 return true;
             } else {
-                $this->modx->log(1, 'Запрос не выполнился. Код ошибки: ' . $json['sms'][$phone]['status_code'] . ' Текст ошибки: ' . $json['sms'][$phone]['status_text']);
+                $this->modx->log(modX::LOG_LEVEL_ERROR, 'Запрос не выполнился. Код ошибки: ' . $json['error_code'] . ' Текст ошибки: ' . $json['error']);
             }
         }        
         return false;

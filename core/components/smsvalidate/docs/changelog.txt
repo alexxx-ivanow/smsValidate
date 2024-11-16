@@ -1,17 +1,21 @@
 Changelog for smsValidate.
 
+1.0.6-beta
+==============
+- Добавление класса smscRu, проверка в классе intisteleSms формата номера, так как начинающееся с 8 сервис не пропускает
+
 1.0.5-beta
 ==============
-- Added different sessions for different forms
+- Разделение сессий для разных форм
 
 1.0.4-beta
 ==============
-- Added new setting smsvalidate.sms_code_length, refactoring settings names
+- Добавление настройки smsvalidate.sms_code_length, рефакторинг нейминга
 
 1.0.2-beta
 ==============
-- Added docs files on core directory
+- Добавил файлы docs 
 
 1.0.1-beta
 ==============
-- Initial release.
+- Первый релиз

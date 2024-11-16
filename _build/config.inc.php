@@ -11,7 +11,7 @@ if (!defined('MODX_CORE_PATH')) {
 return [
     'name' => 'smsValidate',
     'name_lower' => 'smsvalidate',
-    'version' => '1.0.5',
+    'version' => '1.0.6',
     'release' => 'beta',
     // Install package to site right after build
     'install' => false,

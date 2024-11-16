@@ -130,7 +130,7 @@ class SmsValidate
         require_once dirname(__FILE__) . '/handlers/smsru.class.php';
 
         $class = $this->modx->getOption('smsvalidate.sms_handler_class', null, 'smsRu', true);
-
+        
         if ($class != 'smsRu') {
             $this->loadCustomClasses();
         }
@@ -253,7 +253,8 @@ class SmsValidate
                 $message = $this->modx->lexicon('sms_validate_send_incorrect_with_repeat') . '<button class="' . $this->buttonClass . ' jsSmsRepeat">' . $this->modx->lexicon('sms_validate_button_repeat_title') . '</button>';
             }
 
-        } elseif($value == $_SESSION['sms_validate_sms_code_' . $request['af_action']]) {
+        } 
+        elseif($value == $_SESSION['sms_validate_sms_code_' . $request['af_action']]) {
 
             unset($_SESSION['sms_validate_sms_code_' . $request['af_action']]);
             unset($_SESSION['sms_validate_exec_time_' . $request['af_action']]);

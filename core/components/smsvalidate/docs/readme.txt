@@ -31,13 +31,11 @@ Author: Ivanov Alexey <alexxx.abc@yandex.ru>
 5. smsvalidate.sms_handler_class - класс СМС-обработчика - вводится название класса СМС провайдера, об этом ниже.
 
 --------------------
-Переводы к оповещениям в форме хранятся в core/components/smsvalidate/lexicon/
-
---------------------
-Все классы СМС-провайдеров должны находиться в директории /core/components/smsvalidate/model/smsvalidate/handlers/ . В исходном варианте у компонента есть два класса для отправки СМС: 
+Все классы СМС-провайдеров должны находиться в директории /core/components/smsvalidate/model/smsvalidate/handlers/ . В исходном варианте у компонента есть три класса для отправки СМС: 
 
 1. smsRu, файл smsru.class.php (сервис sms.ru) 
 2. intisteleSms, файл intistelesms.class.php (сервис intistele.com)
+3. smscRu - файл smscru.class.php (сервис smsc.ru) 
 
 По умолчанию выбран класс smsRu. Данные доступа по API нужно вписать в конфиг конструктора класса самостоятельно.
 

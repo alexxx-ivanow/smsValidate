@@ -14,14 +14,14 @@ class intisteleSms implements sendSmsInterface {
      * @param modX $modx
      * @param array $config
      */
-	public function __construct(modX $modx, array $config = [])
+	public function __construct($modx, $config = [])
     {
     	$this->modx = $modx;
 
     	$this->config = array_merge([
-            'sms_login' => '',
-            'sms_sender' => '',
-            'api_key' => '',
+            'sms_login' => '', // логин
+            'sms_sender' => '', // имя отправителя
+            'api_key' => '', // введите токен api
             'method' => 'send',
         ], $config);
     }
@@ -42,6 +42,11 @@ class intisteleSms implements sendSmsInterface {
         }
         // приводим телефон к нужному формату
         $phone = str_replace(['+', '(', ')', '-', ' '], '', $phone);
+        
+        // если начинается с восьмерки, заменяем на +7, иначе сервис не пропускает
+        if($phone[0] === '8') {
+            $phone = '+7' . mb_substr($phone, 1);
+        }
      
         // создаем сигнатуру
         $params = [
