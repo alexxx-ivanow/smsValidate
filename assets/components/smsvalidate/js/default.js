@@ -1,26 +1,28 @@
 $(document).on('af_complete', function(event, response) {
     var form = response.form;
-    
+    var smsWrap = form.find('.jsSmsCodeWrap');
     var smsInput = form.find('.jsSmsCodeInput');
+    var repeatHiddenInput = form.find('input[name=repeat_sms]');
+    
     if(smsInput.length) {
     
         var smsFieldName = smsInput.attr('name');
         if(response.data.hasOwnProperty(smsFieldName) && response.data[smsFieldName] != 'undefined') {
         
-            $('input[name=repeat_sms]').val('');
-            $('.jsSmsCodeWrap').fadeIn();
+            repeatHiddenInput.val('');
+            smsWrap.fadeIn();
             
             // повторная отправка СМС
             setTimeout(function() {
-                $('.jsSmsRepeat').on('click', function(e) {
+                form.find('.jsSmsRepeat').on('click', function(e) {
                     e.preventDefault();
-                    $('input[name=repeat_sms]').val('1');
+                    repeatHiddenInput.val('1');
                     form.trigger('submit');
                 });
             }, 1);
             
         } else {
-            $('.jsSmsCodeWrap').fadeOut();
+            smsWrap.fadeOut();
         }
         
     } else {
